@@ -1,0 +1,22 @@
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ssm:GetParameters",
+          "ssm:GetParameter"
+        ],
+        "Resource": "arn:aws:ssm:ap-southeast-2:400442376703:parameter/chat-magic/*"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "elasticfilesystem:ClientMount",
+          "elasticfilesystem:ClientWrite",
+          "elasticfilesystem:ClientRootAccess"
+        ],
+        "Resource": "arn:aws:elasticfilesystem:ap-southeast-2:400442376703:file-system/fs-04f4621770bb91c19"
+      }
+    ]
+  }

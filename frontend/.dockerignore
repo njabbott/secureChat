@@ -1,0 +1,36 @@
+# Node modules (will be installed in container)
+node_modules/
+
+# Build output (will be generated in container)
+dist/
+.angular/
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Documentation
+README.md
+*.md
+
+# Git
+.git/
+.gitignore
+
+# Environment files
+.env
+.env.*
+environment.ts
+environment.*.ts
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

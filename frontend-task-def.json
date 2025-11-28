@@ -1,0 +1,24 @@
+  {
+    "family": "chat-magic-frontend",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::400442376703:role/ecsTaskExecutionRole",
+    "containerDefinitions": [{
+      "name": "frontend",
+      "image": "400442376703.dkr.ecr.ap-southeast-2.amazonaws.com/chat-magic-frontend:latest",
+      "portMappings": [{
+        "containerPort": 80,
+        "protocol": "tcp"
+      }],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/chat-magic-frontend",
+          "awslogs-region": "ap-southeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }]
+  }

@@ -1,0 +1,52 @@
+  {
+    "family": "chat-magic-backend",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "512",
+    "memory": "1024",
+    "executionRoleArn": "arn:aws:iam::400442376703:role/ecsTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::400442376703:role/chatMagicTaskRole",
+    "containerDefinitions": [{
+      "name": "backend",
+      "image": "400442376703.dkr.ecr.ap-southeast-2.amazonaws.com/chat-magic-backend:latest",
+      "portMappings": [{
+        "containerPort": 8000,
+        "protocol": "tcp"
+      }],
+      "environment": [
+        {"name": "OPENAI_MODEL", "value": "gpt-4o"},
+        {"name": "CHROMA_PERSIST_DIR", "value": "/mnt/efs/chroma"},
+        {"name": "CHROMA_COLLECTION_NAME", "value": "confluence_documents"},
+        {"name": "INDEXING_SCHEDULE_HOURS", "value": "24"},
+        {"name": "CHUNK_SIZE", "value": "1000"},
+        {"name": "CHUNK_OVERLAP", "value": "200"},
+        {"name": "HOST", "value": "0.0.0.0"},
+        {"name": "PORT", "value": "8000"},
+        {"name": "CORS_ORIGINS", "value": "*"}
+      ],
+      "secrets": [
+        {"name": "OPENAI_API_KEY", "valueFrom": "arn:aws:ssm:ap-southeast-2:400442376703:parameter/chat-magic/openai-api-key"},
+        {"name": "CONFLUENCE_API_KEY", "valueFrom": "arn:aws:ssm:ap-southeast-2:400442376703:parameter/chat-magic/confluence-api-key"},
+        {"name": "CONFLUENCE_BASE_URL", "valueFrom": "arn:aws:ssm:ap-southeast-2:400442376703:parameter/chat-magic/confluence-base-url"}
+      ],
+      "mountPoints": [{
+        "sourceVolume": "efs-storage",
+        "containerPath": "/mnt/efs"
+      }],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/chat-magic-backend",
+          "awslogs-region": "ap-southeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }],
+    "volumes": [{
+      "name": "efs-storage",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-04f4621770bb91c19",
+        "transitEncryption": "ENABLED"
+      }
+    }]
+  }
