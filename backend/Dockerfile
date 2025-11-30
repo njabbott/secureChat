@@ -27,6 +27,7 @@ COPY . .
 RUN mkdir -p /app/data/chroma
 
 # Expose port
+
 EXPOSE 8000
 
 # Set environment variables
