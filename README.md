@@ -3,8 +3,7 @@
 
 A sophisticated RAG (Retrieval Augmented Generation) chatbot that searches and answers questions from your Confluence documentation, with built-in PII protection.
 
-URL: http://chat-magic-alb-1100203989.ap-southeast-2.elb.amazonaws.com/
-(Todo: update to HTTPS)
+URL: https://nicks-apps.com/secure-chat
 
 ## Features
 
