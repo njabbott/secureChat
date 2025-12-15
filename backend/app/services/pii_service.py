@@ -18,7 +18,17 @@ class PIIService:
     def __init__(self):
         """Initialize Presidio analyzer and anonymizer"""
         try:
-            self.analyzer = AnalyzerEngine()
+            # Load the small spaCy model explicitly before Presidio tries to load it
+            import spacy
+            from presidio_analyzer.nlp_engine import SpacyNlpEngine
+
+            # Load the small model
+            nlp = spacy.load("en_core_web_sm")
+
+            # Create a SpacyNlpEngine with the loaded model
+            nlp_engine = SpacyNlpEngine(models={"en": nlp})
+
+            self.analyzer = AnalyzerEngine(nlp_engine=nlp_engine)
             self.anonymizer = AnonymizerEngine()
 
             # Add custom recognizer for Australian phone numbers
@@ -28,7 +38,7 @@ class PIIService:
 
         except Exception as e:
             logger.error(f"Error initializing PII service: {e}")
-            logger.warning("PII detection may not work properly. Install spaCy model: python -m spacy download en_core_web_lg")
+            logger.warning("PII detection may not work properly. Install spaCy model: python -m spacy download en_core_web_sm")
             # Create dummy engines that will fail gracefully
             self.analyzer = None
             self.anonymizer = None

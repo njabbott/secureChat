@@ -1,8 +1,9 @@
 """Main FastAPI application for Chat Magic"""
 
 import logging
+import time
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -29,14 +30,30 @@ scheduler = AsyncIOScheduler()
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events"""
     # Startup
+    logger.info("="*60)
     logger.info("Starting Chat Magic application...")
+    logger.info("="*60)
 
     # Initialize services
+    logger.info("→ Initializing Confluence service...")
     confluence_svc = ConfluenceService()
+    logger.info("✓ Confluence service initialized")
+
+    logger.info("→ Initializing VectorDB service...")
     vector_db_svc = VectorDBService()
+    logger.info("✓ VectorDB service initialized")
+
+    logger.info("→ Initializing OpenAI service...")
     openai_svc = OpenAIService()
+    logger.info("✓ OpenAI service initialized")
+
+    logger.info("→ Initializing PII service (loading spaCy model)...")
     pii_svc = PIIService()
+    logger.info("✓ PII service initialized")
+
+    logger.info("→ Initializing Indexing service...")
     indexing_svc = IndexingService(confluence_svc, vector_db_svc, pii_svc)
+    logger.info("✓ Indexing service initialized")
 
     # Inject services into routers
     chat.vector_db_service = vector_db_svc
@@ -65,10 +82,11 @@ async def lifespan(app: FastAPI):
     )
     scheduler.start()
 
-    logger.info(
-        f"Scheduled indexing every {settings.indexing_schedule_hours} hours"
-    )
-    logger.info("Chat Magic application started successfully")
+    logger.info(f"→ Scheduled indexing every {settings.indexing_schedule_hours} hours")
+    logger.info("="*60)
+    logger.info("✓✓✓ Chat Magic application started successfully! ✓✓✓")
+    logger.info(f"✓✓✓ Server listening on {settings.host}:{settings.port} ✓✓✓")
+    logger.info("="*60)
 
     yield
 
@@ -85,6 +103,26 @@ app = FastAPI(
     description="RAG-based chatbot for searching Confluence documentation with PII protection",
     lifespan=lifespan,
 )
+
+# Request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all incoming HTTP requests"""
+    start_time = time.time()
+
+    # Log incoming request
+    client_host = request.client.host if request.client else "unknown"
+    logger.info(f"→ HTTP {request.method} {request.url.path} from {client_host}")
+
+    # Process request
+    response = await call_next(request)
+
+    # Log response
+    duration = time.time() - start_time
+    logger.info(f"← HTTP {request.method} {request.url.path} → {response.status_code} ({duration:.3f}s)")
+
+    return response
+
 
 # Configure CORS
 app.add_middleware(

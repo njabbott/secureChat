@@ -1,6 +1,6 @@
-insta# Chat Magic - Backend
+# Secure Chat - Backend
 
-FastAPI-based backend for Chat Magic, a RAG-powered Confluence chatbot with PII protection.
+FastAPI-based backend for Secure Chat, an AI-powered RAG Confluence chatbot with PII protection.
 
 ## Features
 
@@ -150,7 +150,9 @@ backend/
 
 ## Docker Support
 
-The application is designed to be containerized for AWS ECS Fargate deployment. Docker configuration will be added in a future update.
+The application is containerized and deployed to AWS ECS Fargate.
+
+For deployment instructions, see [../DEPLOYMENT.md](../DEPLOYMENT.md)
 
 ## Logging
 

@@ -108,8 +108,9 @@ import { ConfluenceSpace } from '../../models/confluence.model';
 
     .space-count {
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      flex-direction: row;
+      align-items: baseline;
+      gap: 4px;
       margin-left: var(--spacing-sm);
     }
 
@@ -120,7 +121,7 @@ import { ConfluenceSpace } from '../../models/confluence.model';
     }
 
     .count-label {
-      font-size: 10px;
+      font-size: 11px;
       color: var(--text-tertiary);
     }
 

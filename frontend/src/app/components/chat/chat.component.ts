@@ -13,7 +13,7 @@ import { ConversationMessage } from '../../models/chat.model';
       <!-- Messages Area -->
       <div class="messages-area" #messagesArea>
         <div *ngIf="messages.length === 0" class="empty-state">
-          <h2>Welcome to Chat Magic!</h2>
+          <h2>Welcome to Secure Chat!</h2>
           <p>Ask me anything about your Confluence documentation.</p>
           <div class="suggestions">
             <button class="suggestion-btn" (click)="useSuggestion('What documentation do we have?')">
@@ -29,7 +29,7 @@ import { ConversationMessage } from '../../models/chat.model';
              [class.assistant-message]="msg.role === 'assistant'">
           <div class="message-content">
             <div class="message-header">
-              <span class="message-role">{{ msg.role === 'user' ? 'You' : 'Chat Magic' }}</span>
+              <span class="message-role">{{ msg.role === 'user' ? 'You' : 'Secure Chat' }}</span>
               <span class="message-time">{{ msg.timestamp | date:'short' }}</span>
             </div>
             <div class="message-text">{{ msg.content }}</div>
@@ -61,7 +61,7 @@ import { ConversationMessage } from '../../models/chat.model';
         <div *ngIf="isLoading" class="message assistant-message loading-message">
           <div class="message-content">
             <div class="message-header">
-              <span class="message-role">Chat Magic</span>
+              <span class="message-role">Secure Chat</span>
             </div>
             <div class="typing-indicator">
               <span></span>

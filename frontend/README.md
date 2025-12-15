@@ -1,6 +1,6 @@
-# Chat Magic - Frontend
+# Secure Chat - Frontend
 
-Angular 17 frontend for Chat Magic with a LinkedIn-inspired design.
+Angular 17 frontend for Secure Chat with a LinkedIn-inspired design.
 
 ## Features
 
@@ -55,6 +55,8 @@ npm run build
 
 # Output will be in dist/chat-magic-frontend
 ```
+
+For Docker and AWS deployment, see [../DEPLOYMENT.md](../DEPLOYMENT.md)
 
 ## Project Structure
 
@@ -208,4 +210,4 @@ npm install
 
 ## License
 
-Proprietary - Chat Magic
+Proprietary - Secure Chat

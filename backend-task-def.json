@@ -27,7 +27,9 @@
       "secrets": [
         {"name": "OPENAI_API_KEY", "valueFrom": "arn:aws:ssm:ap-southeast-2:400442376703:parameter/chat-magic/openai-api-key"},
         {"name": "CONFLUENCE_API_KEY", "valueFrom": "arn:aws:ssm:ap-southeast-2:400442376703:parameter/chat-magic/confluence-api-key"},
-        {"name": "CONFLUENCE_BASE_URL", "valueFrom": "arn:aws:ssm:ap-southeast-2:400442376703:parameter/chat-magic/confluence-base-url"}
+        {"name": "CONFLUENCE_BASE_URL", "valueFrom": "arn:aws:ssm:ap-southeast-2:400442376703:parameter/chat-magic/confluence-base-url"},
+        {"name": "CONFLUENCE_EMAIL", "valueFrom": "arn:aws:ssm:ap-southeast-2:400442376703:parameter/chat-magic/confluence-email"},
+        {"name": "CONFLUENCE_ORG_ID", "valueFrom": "arn:aws:ssm:ap-southeast-2:400442376703:parameter/chat-magic/confluence-org-id"}
       ],
       "mountPoints": [{
         "sourceVolume": "efs-storage",

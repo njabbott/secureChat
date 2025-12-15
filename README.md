@@ -1,6 +1,6 @@
-# Chat Magic
+# Secure Chat
 
-A sophisticated RAG (Retrieval Augmented Generation) chatbot that searches and answers questions from your Confluence documentation, with built-in PII protection.
+An AI-powered RAG (Retrieval Augmented Generation) chatbot that searches and answers questions from your Confluence documentation, with built-in PII protection.
 
 ## Features
 
@@ -198,15 +198,37 @@ When PII is detected in your query:
 
 Full API documentation: http://localhost:8000/docs
 
-## Docker Deployment (Future)
+## Docker Deployment
 
-The application is designed to be containerized for AWS ECS Fargate deployment. Docker configuration will be added when you're ready to deploy.
+### Local Docker
+```bash
+# Build and start both services
+docker-compose up -d
 
-Key considerations for AWS deployment:
-- Environment variables via AWS Systems Manager Parameter Store
-- Persistent storage for ChromaDB (EFS or S3)
-- Load balancing for the backend
-- Static hosting for the frontend (S3 + CloudFront)
+# View logs
+docker-compose logs -f
+
+# Access the application
+# Frontend: http://localhost
+# Backend: http://localhost:8000/docs
+```
+
+### AWS ECS Fargate
+
+The application is deployed to AWS ECS Fargate with:
+- **Frontend**: Nginx serving Angular app at https://nicks-apps.com/secure-chat
+- **Backend**: FastAPI service with ALB routing
+- **Database**: ChromaDB on EFS for persistence
+- **Secrets**: AWS Systems Manager Parameter Store
+- **Load Balancer**: ALB with path-based routing
+
+**For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)**
+
+Quick deploy:
+```bash
+./deploy-frontend.sh  # Deploy frontend to AWS
+./deploy-backend.sh   # Deploy backend to AWS
+```
 
 ## Troubleshooting
 
@@ -266,13 +288,22 @@ Frontend tests using Jasmine/Karma:
 npm test
 ```
 
+## Documentation
+
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide for Docker and AWS
+- **[frontend/README.md](frontend/README.md)** - Frontend-specific documentation
+- **[backend/README.md](backend/README.md)** - Backend-specific documentation
+
 ## License
 
-Proprietary - Chat Magic
+Proprietary - Secure Chat
 
-## Support
+Designed and Developed by Nick Abbott
 
-For issues or questions, please contact the development team.
+## Links
+
+- **Live Application**: https://nicks-apps.com/secure-chat
+- **GitHub Repository**: https://github.com/njabbott/secureChat
 
 ---
 

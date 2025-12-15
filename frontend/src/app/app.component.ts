@@ -4,6 +4,7 @@ import { ChatComponent } from './components/chat/chat.component';
 import { SpaceListComponent } from './components/space-list/space-list.component';
 import { ChatHistoryComponent } from './components/chat-history/chat-history.component';
 import { IndexingStatusComponent } from './components/indexing-status/indexing-status.component';
+import { AboutModalComponent } from './components/about-modal/about-modal.component';
 
 @Component({
   selector: 'app-root',
@@ -13,7 +14,8 @@ import { IndexingStatusComponent } from './components/indexing-status/indexing-s
     ChatComponent,
     SpaceListComponent,
     ChatHistoryComponent,
-    IndexingStatusComponent
+    IndexingStatusComponent,
+    AboutModalComponent
   ],
   template: `
     <div class="app-container">
@@ -21,7 +23,7 @@ import { IndexingStatusComponent } from './components/indexing-status/indexing-s
       <aside class="sidebar">
         <div class="sidebar-header">
           <h1 class="app-title">Secure Chat</h1>
-          <p class="app-subtitle">Chatbot for the Intranet, with Privacy Protection</p>
+          <p class="app-subtitle">AI Chatbot for intranets, with Privacy Protection</p>
         </div>
 
         <!-- Indexing Status -->
@@ -40,6 +42,14 @@ import { IndexingStatusComponent } from './components/indexing-status/indexing-s
           <h3>Recent Conversations</h3>
           <app-chat-history></app-chat-history>
         </div>
+
+        <!-- About Button -->
+        <div class="sidebar-footer">
+          <button class="about-btn" (click)="showAbout = true">
+            <span class="about-icon">ℹ️</span>
+            About
+          </button>
+        </div>
       </aside>
 
       <!-- Main Content -->
@@ -47,6 +57,9 @@ import { IndexingStatusComponent } from './components/indexing-status/indexing-s
         <app-chat></app-chat>
       </main>
     </div>
+
+    <!-- About Modal -->
+    <app-about-modal *ngIf="showAbout" (close)="showAbout = false"></app-about-modal>
   `,
   styles: [`
     .app-container {
@@ -119,6 +132,39 @@ import { IndexingStatusComponent } from './components/indexing-status/indexing-s
       overflow: hidden;
     }
 
+    .sidebar-footer {
+      padding: var(--spacing-md);
+      border-top: 1px solid var(--border-color);
+      background-color: var(--background-primary);
+    }
+
+    .about-btn {
+      width: 100%;
+      padding: var(--spacing-md);
+      background-color: var(--background-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      transition: all 0.2s;
+    }
+
+    .about-btn:hover {
+      background-color: var(--primary-color);
+      color: var(--text-on-primary);
+      border-color: var(--primary-color);
+    }
+
+    .about-icon {
+      font-size: 16px;
+    }
+
     @media (max-width: 768px) {
       .sidebar {
         display: none;
@@ -128,4 +174,5 @@ import { IndexingStatusComponent } from './components/indexing-status/indexing-s
 })
 export class AppComponent {
   title = 'Secure Chat';
+  showAbout = false;
 }
