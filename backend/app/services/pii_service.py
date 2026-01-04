@@ -18,16 +18,19 @@ class PIIService:
     def __init__(self):
         """Initialize Presidio analyzer and anonymizer"""
         try:
-            # Load the small spaCy model explicitly before Presidio tries to load it
-            import spacy
-            from presidio_analyzer.nlp_engine import SpacyNlpEngine
+            from presidio_analyzer.nlp_engine import NlpEngineProvider
 
-            # Load the small model
-            nlp = spacy.load("en_core_web_sm")
+            # Create NLP configuration with proper lang_code
+            nlp_configuration = {
+                'nlp_engine_name': 'spacy',
+                'models': [{'lang_code': 'en', 'model_name': 'en_core_web_sm'}]
+            }
 
-            # Create a SpacyNlpEngine with the loaded model
-            nlp_engine = SpacyNlpEngine(models={"en": nlp})
+            # Create NLP engine using provider
+            provider = NlpEngineProvider(nlp_configuration=nlp_configuration)
+            nlp_engine = provider.create_engine()
 
+            # Create analyzer with the properly configured NLP engine
             self.analyzer = AnalyzerEngine(nlp_engine=nlp_engine)
             self.anonymizer = AnonymizerEngine()
 

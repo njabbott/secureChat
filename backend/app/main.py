@@ -2,6 +2,7 @@
 
 import logging
 import time
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,7 +16,10 @@ from .services import (
     OpenAIService,
     PIIService,
     IndexingService,
+    RateLimitService,
 )
+from .middleware import RateLimitMiddleware
+from .models.rate_limit import RateLimitConfig
 from .routers import chat, confluence, indexing
 
 # Configure logging
@@ -55,6 +59,27 @@ async def lifespan(app: FastAPI):
     indexing_svc = IndexingService(confluence_svc, vector_db_svc, pii_svc)
     logger.info("✓ Indexing service initialized")
 
+    logger.info("→ Initializing Rate Limit service...")
+    rate_limit_svc = RateLimitService()
+
+    # Register endpoint limits
+    rate_limit_svc.register_endpoint(
+        "/api/chat/message",
+        RateLimitConfig(
+            requests=settings.rate_limit_chat_requests,
+            window_seconds=settings.rate_limit_chat_window
+        )
+    )
+    rate_limit_svc.register_endpoint(
+        "/api/indexing/start",
+        RateLimitConfig(
+            requests=settings.rate_limit_indexing_requests,
+            window_seconds=settings.rate_limit_indexing_window
+        )
+    )
+
+    logger.info("✓ Rate Limit service initialized")
+
     # Inject services into routers
     chat.vector_db_service = vector_db_svc
     chat.openai_service = openai_svc
@@ -71,6 +96,7 @@ async def lifespan(app: FastAPI):
     app.state.openai_service = openai_svc
     app.state.pii_service = pii_svc
     app.state.indexing_service = indexing_svc
+    app.state.rate_limit_service = rate_limit_svc
 
     # Set up scheduled indexing
     scheduler.add_job(
@@ -80,9 +106,20 @@ async def lifespan(app: FastAPI):
         id="scheduled_indexing",
         replace_existing=True,
     )
+
+    # Set up rate limit cleanup
+    scheduler.add_job(
+        lambda: asyncio.create_task(rate_limit_svc.cleanup_stale_buckets()),
+        "interval",
+        seconds=settings.rate_limit_cleanup_interval,
+        id="rate_limit_cleanup",
+        replace_existing=True,
+    )
+
     scheduler.start()
 
     logger.info(f"→ Scheduled indexing every {settings.indexing_schedule_hours} hours")
+    logger.info(f"→ Scheduled rate limit cleanup every {settings.rate_limit_cleanup_interval} seconds")
     logger.info("="*60)
     logger.info("✓✓✓ Chat Magic application started successfully! ✓✓✓")
     logger.info(f"✓✓✓ Server listening on {settings.host}:{settings.port} ✓✓✓")
@@ -123,6 +160,12 @@ async def log_requests(request: Request, call_next):
 
     return response
 
+
+# Add rate limiting middleware
+app.add_middleware(
+    RateLimitMiddleware,
+    enabled=settings.rate_limit_enabled
+)
 
 # Configure CORS
 app.add_middleware(

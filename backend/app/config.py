@@ -1,6 +1,7 @@
 """Configuration management for Chat Magic"""
 
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from typing import List
 from pathlib import Path
 
@@ -36,6 +37,34 @@ class Settings(BaseSettings):
     indexing_schedule_hours: int = 24
     chunk_size: int = 1000
     chunk_overlap: int = 200
+
+    # Rate Limiting
+    rate_limit_enabled: bool = True
+    rate_limit_chat_requests: int = 30
+    rate_limit_chat_window: int = 60  # seconds
+    rate_limit_indexing_requests: int = 5
+    rate_limit_indexing_window: int = 3600  # seconds (1 hour)
+    rate_limit_cleanup_interval: int = 300  # 5 minutes
+
+    @field_validator('rate_limit_chat_requests', 'rate_limit_indexing_requests')
+    @classmethod
+    def validate_request_limits(cls, v: int, info) -> int:
+        """Validate rate limit request counts are positive and reasonable"""
+        if v <= 0:
+            raise ValueError(f"{info.field_name} must be positive, got {v}")
+        if v > 10000:
+            raise ValueError(f"{info.field_name} seems unreasonably high ({v}), max allowed is 10000")
+        return v
+
+    @field_validator('rate_limit_chat_window', 'rate_limit_indexing_window', 'rate_limit_cleanup_interval')
+    @classmethod
+    def validate_time_windows(cls, v: int, info) -> int:
+        """Validate rate limit time windows are positive and reasonable"""
+        if v <= 0:
+            raise ValueError(f"{info.field_name} must be positive, got {v}")
+        if v > 86400:  # 24 hours
+            raise ValueError(f"{info.field_name} seems unreasonably high ({v}s), max allowed is 86400s (24 hours)")
+        return v
 
     @property
     def cors_origins_list(self) -> List[str]:

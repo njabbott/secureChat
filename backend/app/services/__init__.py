@@ -5,6 +5,7 @@ from .vector_db_service import VectorDBService
 from .openai_service import OpenAIService
 from .pii_service import PIIService
 from .indexing_service import IndexingService
+from .rate_limit_service import RateLimitService
 
 __all__ = [
     "ConfluenceService",
@@ -12,4 +13,5 @@ __all__ = [
     "OpenAIService",
     "PIIService",
     "IndexingService",
+    "RateLimitService",
 ]
