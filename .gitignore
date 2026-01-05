@@ -58,3 +58,10 @@ frontend/.sass-cache/
 # Docker
 docker-compose.override.yml
 .docker/
+
+# AWS deployment - temporary/sensitive files
+ssl-setup-vars.sh
+complete-https.sh
+dns-validation.json
+domain-records.json
+validation-cnames.json
