@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     confluence_org_id: str
     confluence_api_key: str
 
+    # Jira (reuses Confluence credentials — same Atlassian Cloud instance)
+    jira_project_key: str
+
     # ChromaDB
     chroma_persist_dir: str = "./data/chroma"
     chroma_collection_name: str = "confluence_documents"
@@ -37,6 +40,10 @@ class Settings(BaseSettings):
     indexing_schedule_hours: int = 24
     chunk_size: int = 1000
     chunk_overlap: int = 200
+
+    # Hybrid search and reranking
+    hybrid_search_top_k: int = 20
+    rerank_top_n: int = 5
 
     # Rate Limiting
     rate_limit_enabled: bool = True

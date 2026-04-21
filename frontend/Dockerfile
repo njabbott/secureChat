@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Build the application for production
-RUN npm run build
+RUN npm run build -- --base-href /secure-chat/
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine
@@ -22,7 +22,7 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist/chat-magic-frontend /usr/share/nginx/html
+COPY --from=builder /app/dist/chat-magic-frontend /usr/share/nginx/html/secure-chat
 
 # Expose port 80
 EXPOSE 80

@@ -6,6 +6,8 @@ from .openai_service import OpenAIService
 from .pii_service import PIIService
 from .indexing_service import IndexingService
 from .rate_limit_service import RateLimitService
+from .reranker_service import RerankerService
+from .jira_service import JiraService
 
 __all__ = [
     "ConfluenceService",
@@ -14,4 +16,6 @@ __all__ = [
     "PIIService",
     "IndexingService",
     "RateLimitService",
+    "RerankerService",
+    "JiraService",
 ]

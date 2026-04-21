@@ -95,7 +95,7 @@ docker-compose down
 ```
 
 This script:
-1. Builds Docker image for `linux/amd64` (Fargate architecture)
+1. Builds Docker image for `linux/arm64` (Fargate architecture)
 2. Tags image for ECR
 3. Pushes to ECR repository
 4. Forces new ECS deployment
@@ -117,9 +117,9 @@ aws ecr get-login-password --region ap-southeast-2 | \
   docker login --username AWS --password-stdin \
   400442376703.dkr.ecr.ap-southeast-2.amazonaws.com
 
-# 2. Build for linux/amd64
+# 2. Build for linux/arm64
 cd frontend
-docker build --platform linux/amd64 -t chat-magic-frontend:latest .
+docker build --platform linux/arm64 -t chat-magic-frontend:latest .
 
 # 3. Tag for ECR
 docker tag chat-magic-frontend:latest \
@@ -185,13 +185,13 @@ location @backend_unavailable {
 
 ### CPU Architecture
 
-**MUST** build for `linux/amd64` when deploying to AWS Fargate:
+**MUST** build for `linux/arm64` when deploying to AWS Fargate (Graviton):
 
 ```bash
-docker build --platform linux/amd64 -t image-name .
+docker build --platform linux/arm64 -t image-name .
 ```
 
-Without `--platform`, builds for your local architecture (e.g., `arm64` on M1 Mac), which won't run on Fargate.
+Without `--platform`, Docker may build for a different architecture. Always specify explicitly.
 
 ### Health Checks
 
@@ -257,11 +257,11 @@ aws ecs describe-services \
 
 ### Platform Mismatch Error
 
-**Error**: "Manifest does not contain descriptor matching platform 'linux/amd64'"
+**Error**: "Manifest does not contain descriptor matching platform 'linux/arm64'"
 
 **Cause**: Image built for wrong CPU architecture
 
-**Solution**: Rebuild with `--platform linux/amd64` flag
+**Solution**: Rebuild with `--platform linux/arm64` flag
 
 ### API Requests Failing (404 or 502)
 

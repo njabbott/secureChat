@@ -20,6 +20,12 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Download spaCy language model for PII detection using pip (using small model for faster startup)
 RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
 
+# Install PyTorch CPU-only wheel (avoids ~400MB CUDA build)
+RUN pip install --no-cache-dir torch==2.2.2 --index-url https://download.pytorch.org/whl/cpu
+
+# Pre-download cross-encoder model weights into the image at build time
+RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')"
+
 # Copy application code
 COPY . .
 
@@ -36,7 +42,7 @@ ENV HOST=0.0.0.0
 ENV PORT=8000
 
 # Health check with start period for application startup (small spaCy model loads quickly)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/chat/health')"
 
 # Run the application

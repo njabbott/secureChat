@@ -274,32 +274,56 @@ export class IndexingStatusComponent implements OnInit, OnDestroy {
   constructor(private indexingService: IndexingService) {}
 
   ngOnInit(): void {
-    this.loadStatus();
-    this.startPolling();
+    this.indexingService.getStatus().subscribe({
+      next: (status) => {
+        this.status = status;
+        // Start fast polling if already indexing, slow poll otherwise
+        if (status.is_indexing) {
+          this.startPolling();
+        } else {
+          this.startSlowPolling();
+        }
+      },
+      error: () => this.startSlowPolling()
+    });
   }
 
   ngOnDestroy(): void {
     this.stopPolling();
   }
 
-  loadStatus(): void {
-    this.indexingService.getStatus().subscribe({
-      next: (status) => {
-        this.status = status;
-      },
-      error: (error) => {
-        console.error('Error loading indexing status:', error);
-      }
-    });
-  }
-
   startPolling(): void {
-    // Poll status every 2 seconds
+    // Poll every 2s while indexing, every 30s when idle
     this.statusSubscription = interval(2000)
       .pipe(switchMap(() => this.indexingService.getStatus()))
       .subscribe({
         next: (status) => {
+          const wasIndexing = this.status?.is_indexing;
           this.status = status;
+
+          // When indexing finishes, restart polling at the slow rate
+          if (wasIndexing && !status.is_indexing) {
+            this.stopPolling();
+            this.startSlowPolling();
+          }
+        },
+        error: (error) => {
+          console.error('Error polling status:', error);
+        }
+      });
+  }
+
+  startSlowPolling(): void {
+    this.statusSubscription = interval(30000)
+      .pipe(switchMap(() => this.indexingService.getStatus()))
+      .subscribe({
+        next: (status) => {
+          this.status = status;
+          // Switch back to fast polling if indexing starts (e.g. scheduled run)
+          if (status.is_indexing) {
+            this.stopPolling();
+            this.startPolling();
+          }
         },
         error: (error) => {
           console.error('Error polling status:', error);

@@ -12,11 +12,11 @@ echo "================================================"
 echo "Complete Backend Deployment to AWS ECS"
 echo "================================================"
 
-# Step 1: Build the Docker image for linux/amd64
+# Step 1: Build the Docker image for linux/arm64
 echo ""
-echo "Step 1: Building Docker image for linux/amd64..."
+echo "Step 1: Building Docker image for linux/arm64..."
 cd backend
-docker build --platform linux/amd64 -t ${ECR_REPO}:latest .
+docker build --platform linux/arm64 -t ${ECR_REPO}:latest .
 cd ..
 
 # Step 2: Tag the image for ECR

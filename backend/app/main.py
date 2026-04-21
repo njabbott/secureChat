@@ -2,7 +2,6 @@
 
 import logging
 import time
-import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,10 +16,12 @@ from .services import (
     PIIService,
     IndexingService,
     RateLimitService,
+    RerankerService,
+    JiraService,
 )
 from .middleware import RateLimitMiddleware
 from .models.rate_limit import RateLimitConfig
-from .routers import chat, confluence, indexing
+from .routers import chat, confluence, indexing, jira
 
 # Configure logging
 setup_logging(log_level=settings.log_level)
@@ -55,6 +56,14 @@ async def lifespan(app: FastAPI):
     pii_svc = PIIService()
     logger.info("✓ PII service initialized")
 
+    logger.info("→ Initializing Reranker service...")
+    reranker_svc = RerankerService()
+    logger.info("✓ Reranker service initialized (model lazy-loads on first request)")
+
+    logger.info("→ Initializing Jira service...")
+    jira_svc = JiraService()
+    logger.info("✓ Jira service initialized")
+
     logger.info("→ Initializing Indexing service...")
     indexing_svc = IndexingService(confluence_svc, vector_db_svc, pii_svc)
     logger.info("✓ Indexing service initialized")
@@ -84,19 +93,25 @@ async def lifespan(app: FastAPI):
     chat.vector_db_service = vector_db_svc
     chat.openai_service = openai_svc
     chat.pii_service = pii_svc
+    chat.reranker_service = reranker_svc
+    chat.jira_service = jira_svc
 
     confluence.confluence_service = confluence_svc
     confluence.vector_db_service = vector_db_svc
 
     indexing.indexing_service = indexing_svc
 
+    jira.jira_service = jira_svc
+
     # Store services in app state for access elsewhere
     app.state.confluence_service = confluence_svc
     app.state.vector_db_service = vector_db_svc
     app.state.openai_service = openai_svc
     app.state.pii_service = pii_svc
+    app.state.reranker_service = reranker_svc
     app.state.indexing_service = indexing_svc
     app.state.rate_limit_service = rate_limit_svc
+    app.state.jira_service = jira_svc
 
     # Set up scheduled indexing
     scheduler.add_job(
@@ -109,7 +124,7 @@ async def lifespan(app: FastAPI):
 
     # Set up rate limit cleanup
     scheduler.add_job(
-        lambda: asyncio.create_task(rate_limit_svc.cleanup_stale_buckets()),
+        rate_limit_svc.cleanup_stale_buckets,
         "interval",
         seconds=settings.rate_limit_cleanup_interval,
         id="rate_limit_cleanup",
@@ -180,6 +195,7 @@ app.add_middleware(
 app.include_router(chat.router)
 app.include_router(confluence.router)
 app.include_router(indexing.router)
+app.include_router(jira.router)
 
 
 @app.get("/")

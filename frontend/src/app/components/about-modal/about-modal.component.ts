@@ -14,8 +14,10 @@ import { CommonModule } from '@angular/common';
           <h1>About</h1>
 
           <p class="intro">
-            Secure Chat is a sophisticated RAG (Retrieval Augmented Generation) chatbot that searches
-            and answers questions from your Confluence documentation, with built-in PII protection.
+            Secure Chat is a RAG (Retrieval Augmented Generation) chatbot that searches your Confluence
+            documentation and answers questions with source attribution and built-in PII protection.
+            It includes an <strong>AI workflow</strong> integration that creates real Jira tickets —
+            either on request, or automatically offered when no relevant documentation is found.
           </p>
 
           <p class="designer">Designed and Developed by Nick Abbott.</p>
@@ -28,6 +30,9 @@ import { CommonModule } from '@angular/common';
             <li><strong>Source Attribution:</strong> Every answer includes links to source Confluence pages</li>
             <li><strong>Multi-Space Support:</strong> Indexes and searches across all Confluence spaces</li>
             <li><strong>Progress Tracking:</strong> Real-time updates during indexing operations</li>
+            <li><strong>Hybrid Search:</strong> Combines semantic vector search with BM25 keyword search, merged via Reciprocal Rank Fusion for higher recall</li>
+            <li><strong>Reranking:</strong> Cross-encoder model re-scores retrieved results for precision before sending to GPT-4o</li>
+            <li><strong>Jira Integration:</strong> AI detects ticket-creation intent via OpenAI function calling and creates real Jira tickets; also offers ticket creation when no documentation is found</li>
           </ul>
 
           <h2>Architecture</h2>
@@ -38,8 +43,10 @@ import { CommonModule } from '@angular/common';
             <li><strong>ChromaDB:</strong> Vector database for semantic search</li>
             <li><strong>OpenAI:</strong> GPT-4o for chat completions and embeddings</li>
             <li><strong>Microsoft Presidio:</strong> PII detection and anonymisation</li>
-            <li><strong>Atlassian Python API:</strong> Confluence integration</li>
+            <li><strong>Atlassian Python API:</strong> Confluence and Jira integration</li>
             <li><strong>APScheduler:</strong> Scheduled indexing</li>
+            <li><strong>rank-bm25:</strong> BM25 keyword search for hybrid retrieval</li>
+            <li><strong>sentence-transformers:</strong> Cross-encoder reranking (ms-marco-MiniLM-L-6-v2)</li>
           </ul>
 
           <h3>Frontend (Angular)</h3>

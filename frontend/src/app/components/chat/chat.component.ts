@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../services/chat.service';
-import { ConversationMessage } from '../../models/chat.model';
+import { JiraService } from '../../services/jira.service';
+import { ConversationMessage, JiraTicket } from '../../models/chat.model';
 
 @Component({
   selector: 'app-chat',
@@ -54,6 +55,32 @@ import { ConversationMessage } from '../../models/chat.model';
                   <span class="source-space">{{ source.space }}</span>
                 </a>
               </div>
+            </div>
+
+            <!-- Jira ticket created card -->
+            <div *ngIf="msg.jiraTicket" class="jira-ticket-card">
+              <div class="jira-ticket-header">
+                <span class="jira-check">&#10003;</span> Jira ticket created
+              </div>
+              <div class="jira-ticket-body">
+                <span class="jira-key">{{ msg.jiraTicket.key }}</span>
+                <span class="jira-type">{{ msg.jiraTicket.issue_type }}</span>
+              </div>
+              <div class="jira-ticket-summary">{{ msg.jiraTicket.summary }}</div>
+              <a [href]="msg.jiraTicket.url" target="_blank" class="jira-ticket-link">
+                View in Jira &#8594;
+              </a>
+            </div>
+
+            <!-- Offer to create a ticket when no docs found -->
+            <div *ngIf="msg.suggestTicket && !msg.jiraTicket" class="jira-suggest">
+              <span class="jira-suggest-text">No documentation found. Want to log this as a Jira ticket?</span>
+              <button class="jira-suggest-btn"
+                      [disabled]="msg.creatingTicket"
+                      (click)="createTicketFromSuggestion(msg)">
+                <span *ngIf="!msg.creatingTicket">&#128203; Create Jira Ticket</span>
+                <span *ngIf="msg.creatingTicket" class="spinner"></span>
+              </button>
             </div>
           </div>
         </div>
@@ -363,15 +390,108 @@ import { ConversationMessage } from '../../models/chat.model';
       font-size: 11px;
       color: var(--text-tertiary);
     }
+
+    .jira-ticket-card {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1.5px solid #2d8a4e;
+      border-radius: var(--radius-sm);
+      background-color: #f0faf4;
+      font-size: 13px;
+    }
+
+    .jira-ticket-header {
+      font-weight: 600;
+      color: #2d8a4e;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .jira-check {
+      font-size: 15px;
+    }
+
+    .jira-ticket-body {
+      display: flex;
+      gap: var(--spacing-sm);
+      align-items: center;
+      margin-bottom: 2px;
+    }
+
+    .jira-key {
+      font-weight: 700;
+      color: #0a66c2;
+    }
+
+    .jira-type {
+      font-size: 11px;
+      color: var(--text-secondary);
+      background-color: #e8f0fe;
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    .jira-ticket-summary {
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .jira-ticket-link {
+      font-size: 12px;
+      color: #0a66c2;
+      text-decoration: none;
+    }
+
+    .jira-ticket-link:hover {
+      text-decoration: underline;
+    }
+
+    .jira-suggest {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    .jira-suggest-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+
+    .jira-suggest-btn {
+      padding: var(--spacing-xs) var(--spacing-md);
+      background-color: #0a66c2;
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.2s;
+      min-width: 160px;
+    }
+
+    .jira-suggest-btn:hover:not(:disabled) {
+      background-color: #004182;
+    }
+
+    .jira-suggest-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   `]
 })
 export class ChatComponent implements OnInit {
-  messages: ConversationMessage[] = [];
+  messages: (ConversationMessage & { creatingTicket?: boolean })[] = [];
   userInput: string = '';
   isLoading: boolean = false;
   sessionId: string;
 
-  constructor(private chatService: ChatService) {
+  constructor(private chatService: ChatService, private jiraService: JiraService) {
     this.sessionId = this.generateSessionId();
   }
 
@@ -406,7 +526,10 @@ export class ChatComponent implements OnInit {
           timestamp: new Date(response.timestamp),
           sources: response.sources,
           pii_filtered: response.pii_filtered,
-          pii_info: response.pii_info
+          pii_info: response.pii_info,
+          jiraTicket: response.jira_ticket,
+          suggestTicket: response.suggest_ticket,
+          originalQuestion: query,
         };
 
         this.messages.push(assistantMessage);
@@ -445,6 +568,26 @@ export class ChatComponent implements OnInit {
     return Object.entries(entities)
       .map(([type, count]) => `${type} (${count})`)
       .join(', ');
+  }
+
+  createTicketFromSuggestion(msg: ConversationMessage & { creatingTicket?: boolean }): void {
+    msg.creatingTicket = true;
+    this.jiraService.createTicket({
+      summary: msg.originalQuestion || 'Unanswered question from Secure Chat',
+      description: msg.content,
+      issue_type: 'Question',
+      priority: 'Medium',
+    }).subscribe({
+      next: (ticket: JiraTicket) => {
+        msg.jiraTicket = ticket;
+        msg.suggestTicket = false;
+        msg.creatingTicket = false;
+      },
+      error: (err: any) => {
+        console.error('Failed to create Jira ticket:', err);
+        msg.creatingTicket = false;
+      }
+    });
   }
 
   private scrollToBottom(): void {

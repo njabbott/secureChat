@@ -14,6 +14,13 @@ export interface Source {
   url: string;
 }
 
+export interface JiraTicket {
+  key: string;
+  url: string;
+  summary: string;
+  issue_type: string;
+}
+
 export interface ChatResponse {
   response: string;
   sources: Source[];
@@ -21,6 +28,8 @@ export interface ChatResponse {
   pii_info?: PIIInfo;
   session_id?: string;
   timestamp: string;
+  jira_ticket?: JiraTicket;
+  suggest_ticket?: boolean;
 }
 
 export interface ConversationMessage {
@@ -30,4 +39,7 @@ export interface ConversationMessage {
   sources?: Source[];
   pii_filtered?: boolean;
   pii_info?: PIIInfo;
+  jiraTicket?: JiraTicket;
+  suggestTicket?: boolean;
+  originalQuestion?: string;
 }

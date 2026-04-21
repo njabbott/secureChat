@@ -22,6 +22,15 @@ class ChatMessage(BaseModel):
     session_id: Optional[str] = Field(None, description="Optional session ID for tracking conversations")
 
 
+class JiraTicket(BaseModel):
+    """A created Jira ticket"""
+
+    key: str = Field(..., description="Jira issue key, e.g. DEMO-42")
+    url: str = Field(..., description="Direct URL to the Jira issue")
+    summary: str = Field(..., description="Ticket title")
+    issue_type: str = Field(..., description="Issue type: Task, Bug, or Question")
+
+
 class ChatResponse(BaseModel):
     """Response from the chatbot"""
 
@@ -34,6 +43,8 @@ class ChatResponse(BaseModel):
     pii_info: Optional[PIIInfo] = Field(None, description="Information about filtered PII")
     session_id: Optional[str] = Field(None, description="Session ID for this conversation")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Response timestamp")
+    jira_ticket: Optional[JiraTicket] = Field(None, description="Jira ticket created during this response")
+    suggest_ticket: bool = Field(default=False, description="True when no docs found — frontend should offer ticket creation")
 
 
 class ChatHistory(BaseModel):

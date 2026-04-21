@@ -6,6 +6,7 @@ import chromadb
 from chromadb.config import Settings as ChromaSettings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from openai import OpenAI
+from rank_bm25 import BM25Okapi
 
 from ..config import settings
 from ..models.confluence import ConfluenceDocument
@@ -39,6 +40,11 @@ class VectorDBService:
             length_function=len,
         )
 
+        # BM25 index (in-memory, rebuilt after every write)
+        self._bm25_corpus: list = []  # list of (chunk_id, text, metadata_dict)
+        self._bm25_index: Optional[BM25Okapi] = None
+        self._build_bm25_index()
+
         logger.info(
             f"Initialized ChromaDB service with collection: {settings.chroma_collection_name}"
         )
@@ -62,6 +68,42 @@ class VectorDBService:
         except Exception as e:
             logger.error(f"Error generating embedding: {e}")
             raise
+
+    def _build_bm25_index(self) -> None:
+        all_docs = self.collection.get(include=["documents", "metadatas"])
+        ids = all_docs.get("ids", [])
+        if not ids:
+            self._bm25_corpus = []
+            self._bm25_index = None
+            return
+        self._bm25_corpus = list(zip(ids, all_docs["documents"], all_docs["metadatas"]))
+        tokenised = [text.lower().split() for _, text, _ in self._bm25_corpus]
+        self._bm25_index = BM25Okapi(tokenised)
+        logger.info(f"BM25 index built with {len(self._bm25_corpus)} chunks")
+
+    def bm25_query(
+        self,
+        query_text: str,
+        n_results: int = 20,
+        space_key: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        if not self._bm25_index or not self._bm25_corpus:
+            return []
+        tokenised_query = query_text.lower().split()
+        scores = self._bm25_index.get_scores(tokenised_query)
+        scored = [(scores[i], self._bm25_corpus[i]) for i in range(len(scores))]
+        if space_key:
+            scored = [(s, entry) for s, entry in scored if entry[2].get("space_key") == space_key]
+        scored.sort(key=lambda x: x[0], reverse=True)
+        results = []
+        for score, (chunk_id, text, metadata) in scored[:n_results]:
+            results.append({
+                "id": chunk_id,
+                "document": text,
+                "metadata": metadata,
+                "bm25_score": float(score),
+            })
+        return results
 
     def add_documents(self, documents: List[ConfluenceDocument]) -> int:
         """
@@ -121,6 +163,7 @@ class VectorDBService:
                     total_chunks += len(ids)
 
             logger.info(f"Added {total_chunks} chunks from {len(documents)} documents to vector DB")
+            self._build_bm25_index()
             return total_chunks
 
         except Exception as e:
@@ -189,6 +232,7 @@ class VectorDBService:
                 metadata={"description": "Confluence documents for Chat Magic RAG"},
             )
 
+            self._build_bm25_index()
             logger.info("Cleared vector database collection")
 
         except Exception as e:
