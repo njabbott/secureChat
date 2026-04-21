@@ -1,6 +1,6 @@
 # Secure Chat
 
-An AI-powered RAG (Retrieval Augmented Generation) chatbot that searches and answers questions from your Confluence documentation, with built-in PII protection.
+An AI-powered RAG (Retrieval Augmented Generation) chatbot that searches and answers questions from your Confluence documentation, with built-in PII protection and **AI workflow** integration for real Jira ticket creation.
 
 ## Features
 
@@ -11,6 +11,9 @@ An AI-powered RAG (Retrieval Augmented Generation) chatbot that searches and ans
 - **Source Attribution**: Every answer includes links to source Confluence pages
 - **Multi-Space Support**: Indexes and searches across all Confluence spaces
 - **Progress Tracking**: Real-time updates during indexing operations
+- **Hybrid Search**: Combines semantic vector search and BM25 keyword search via Reciprocal Rank Fusion
+- **Reranking**: Cross-encoder model (ms-marco-MiniLM-L-6-v2) re-scores results before GPT-4o
+- **Jira Integration**: AI detects ticket-creation intent via OpenAI function calling; also offers ticket creation when no relevant documentation is found
 
 ## Architecture
 
@@ -19,8 +22,10 @@ An AI-powered RAG (Retrieval Augmented Generation) chatbot that searches and ans
 - **ChromaDB**: Vector database for semantic search
 - **OpenAI**: GPT-4o for chat completions and embeddings
 - **Microsoft Presidio**: PII detection and anonymization
-- **Atlassian Python API**: Confluence integration
+- **Atlassian Python API**: Confluence and Jira integration
 - **APScheduler**: Scheduled indexing
+- **rank-bm25**: BM25 keyword search for hybrid retrieval
+- **sentence-transformers**: Cross-encoder reranking (ms-marco-MiniLM-L-6-v2)
 
 ### Frontend (Angular)
 - **Angular 17**: Modern standalone components
@@ -98,13 +103,16 @@ chat-magic/
 │   │   ├── services/            # Business logic
 │   │   │   ├── confluence_service.py
 │   │   │   ├── vector_db_service.py
-│   │   │   ├── openai_service.py
+│   │   │   ├── openai_service.py  # includes Jira function calling
 │   │   │   ├── pii_service.py
-│   │   │   └── indexing_service.py
+│   │   │   ├── indexing_service.py
+│   │   │   ├── reranker_service.py
+│   │   │   └── jira_service.py
 │   │   └── routers/             # API endpoints
 │   │       ├── chat.py
 │   │       ├── confluence.py
-│   │       └── indexing.py
+│   │       ├── indexing.py
+│   │       └── jira.py
 │   ├── requirements.txt
 │   └── README.md
 ├── frontend/
@@ -137,6 +145,9 @@ OPENAI_MODEL=gpt-4o
 # Confluence
 CONFLUENCE_BASE_URL=https://nickabbott001.atlassian.net
 CONFLUENCE_API_KEY=<your-key>
+
+# Jira (reuses Confluence URL and API key)
+JIRA_PROJECT_KEY=<your-project-key>
 
 # ChromaDB
 CHROMA_PERSIST_DIR=./data/chroma
@@ -183,7 +194,7 @@ When PII is detected in your query:
 ## API Endpoints
 
 ### Chat
-- `POST /api/chat/message` - Send a message
+- `POST /api/chat/message` - Send a message (includes Jira function calling)
 - `GET /api/chat/health` - Health check
 
 ### Confluence
@@ -195,6 +206,11 @@ When PII is detected in your query:
 - `POST /api/indexing/stop` - Stop indexing
 - `GET /api/indexing/status` - Get status
 - `GET /api/indexing/progress` - Get progress
+
+### Jira
+- `POST /api/jira/create-ticket` - Create a Jira ticket
+- `GET /api/jira/projects` - List available Jira projects
+- `GET /api/jira/issue-types` - List valid issue types for configured project
 
 Full API documentation: http://localhost:8000/docs
 

@@ -5,25 +5,30 @@ FastAPI-based backend for Secure Chat, an AI-powered RAG Confluence chatbot with
 ## Features
 
 - **RAG (Retrieval Augmented Generation)**: Uses ChromaDB vector database and OpenAI for intelligent responses
+- **Hybrid Search**: Combines semantic vector search with BM25 keyword search, merged via Reciprocal Rank Fusion
+- **Reranking**: Cross-encoder model (ms-marco-MiniLM-L-6-v2) re-scores results for precision before GPT-4o
 - **Confluence Integration**: Fetches and indexes content from all Confluence spaces
 - **PII Protection**: Automatically detects and filters personally identifiable information using Microsoft Presidio
 - **Real-time Indexing**: Manual and scheduled indexing with progress tracking
-- **RESTful API**: Clean API endpoints for chat, Confluence info, and indexing control
+- **Jira Integration**: OpenAI function calling creates real Jira tickets on request or when no documentation is found
+- **RESTful API**: Clean API endpoints for chat, Confluence info, indexing, and Jira
 
 ## Architecture
 
 ### Services
 
 - **ConfluenceService**: Integrates with Confluence API to fetch spaces and documents
-- **VectorDBService**: Manages ChromaDB for vector storage and semantic search
-- **OpenAIService**: Handles chat completions using OpenAI GPT-4o
+- **VectorDBService**: Manages ChromaDB for vector storage, semantic search, and BM25 keyword search
+- **OpenAIService**: Handles chat completions and Jira function calling via OpenAI GPT-4o
 - **PIIService**: Detects and anonymizes PII using Microsoft Presidio
 - **IndexingService**: Coordinates indexing process with progress tracking
+- **RerankerService**: Cross-encoder reranking using sentence-transformers
+- **JiraService**: Creates Jira tickets via the Atlassian Python API
 
 ### API Endpoints
 
 #### Chat
-- `POST /api/chat/message` - Send a message to the chatbot
+- `POST /api/chat/message` - Send a message (includes Jira function calling)
 - `GET /api/chat/health` - Health check for chat services
 
 #### Confluence
@@ -35,6 +40,11 @@ FastAPI-based backend for Secure Chat, an AI-powered RAG Confluence chatbot with
 - `POST /api/indexing/stop` - Stop indexing process
 - `GET /api/indexing/status` - Get indexing status and metadata
 - `GET /api/indexing/progress` - Get real-time indexing progress
+
+#### Jira
+- `POST /api/jira/create-ticket` - Create a Jira ticket
+- `GET /api/jira/projects` - List available Jira projects
+- `GET /api/jira/issue-types` - List valid issue types for the configured project
 
 ## Setup
 
@@ -98,6 +108,9 @@ OPENAI_MODEL=gpt-4o
 CONFLUENCE_BASE_URL=https://your-domain.atlassian.net
 CONFLUENCE_API_KEY=your-confluence-api-key
 
+# Jira (reuses Confluence URL, email, and API key)
+JIRA_PROJECT_KEY=your-jira-project-key
+
 # ChromaDB
 CHROMA_PERSIST_DIR=./data/chroma
 CHROMA_COLLECTION_NAME=confluence_documents
@@ -124,19 +137,22 @@ backend/
 │   ├── main.py              # FastAPI application entry point
 │   ├── config.py            # Configuration management
 │   ├── models/              # Pydantic models
-│   │   ├── chat.py
+│   │   ├── chat.py          # includes JiraTicket model
 │   │   ├── confluence.py
 │   │   └── indexing.py
 │   ├── services/            # Business logic
 │   │   ├── confluence_service.py
 │   │   ├── vector_db_service.py
-│   │   ├── openai_service.py
+│   │   ├── openai_service.py    # includes Jira function calling tools
 │   │   ├── pii_service.py
-│   │   └── indexing_service.py
+│   │   ├── indexing_service.py
+│   │   ├── reranker_service.py  # cross-encoder reranking
+│   │   └── jira_service.py      # Jira ticket creation
 │   ├── routers/             # API endpoints
 │   │   ├── chat.py
 │   │   ├── confluence.py
-│   │   └── indexing.py
+│   │   ├── indexing.py
+│   │   └── jira.py
 │   └── utils/               # Utility functions
 ├── requirements.txt
 └── README.md
